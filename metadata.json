@@ -1,0 +1,5 @@
+{
+  "name": "ApexAI Telemetry & Tuning",
+  "description": "Automotive data engineering and high-performance tuning assistant with telemetry analysis, setup visualization, and audio reports.",
+  "requestFramePermissions": []
+}
