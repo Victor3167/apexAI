@@ -7,10 +7,10 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const tabs = [
-    { id: 'telemetry', label: 'Telemetry Analyzer', icon: Activity },
+    { id: 'telemetry', label: 'Telemetria', icon: Activity },
     { id: 'chat', label: 'ApexAI Chat', icon: MessageSquare },
-    { id: 'visualizer', label: 'Setup Visualizer', icon: ImageIcon },
-    { id: 'audio', label: 'Audio Report', icon: Volume2 },
+    { id: 'visualizer', label: 'Visualizador de Setup', icon: ImageIcon },
+    { id: 'audio', label: 'Relatório de áudio', icon: Volume2 },
   ];
 
   return (

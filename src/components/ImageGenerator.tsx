@@ -54,7 +54,7 @@ export function ImageGenerator() {
     <div className="p-8 max-w-5xl mx-auto h-full overflow-y-auto">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-white mb-2">Setup Visualizer</h2>
-        <p className="text-zinc-400">Generate high-quality images of car setups, tracks, or concepts using Nano Banana Pro.</p>
+        <p className="text-zinc-400">Gere imagens de alta qualidade de configurações de carros, pistas ou conceitos usando o Nano Banana Pro.</p>
       </div>
 
       {!hasKey && (

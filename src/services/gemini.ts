@@ -6,7 +6,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function analyzeTelemetry(data: string): Promise<TelemetryAnalysis> {
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.5-flash",
     contents: `Você é o ApexAI, um engenheiro de dados automotivos e preparador (tuner) de alta performance especializado em dinâmica veicular e calibração de motores.
 
 Seu objetivo é analisar logs de telemetria brutos (fornecidos em formato CSV ou JSON) extraídos de ECUs de carros preparados (como motores com injeção programável) ou de simuladores profissionais de corrida.
@@ -81,35 +81,33 @@ export async function generateSpeech(text: string): Promise<string | null> {
 }
 
 export async function generateImage(prompt: string, imageSize: "1K" | "2K" | "4K"): Promise<string | null> {
-  // For gemini-3-pro-image-preview, we MUST use the user-selected API key if available
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  const localAi = new GoogleGenAI({ apiKey });
-  
-  const response = await localAi.models.generateContent({
-    model: "gemini-3-pro-image-preview",
-    contents: {
-      parts: [{ text: prompt }],
-    },
-    config: {
-      imageConfig: {
-        aspectRatio: "16:9",
-        imageSize: imageSize,
-      },
-    },
-  });
+  const enhancedPrompt = `${prompt}, photorealistic automotive photography, highly detailed, 8k resolution, ray tracing`;
 
-  const parts = response.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
-    }
+  try {
+    const response = await fetch("http://localhost:3001/api/generate-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: enhancedPrompt }),
+    });
+
+    if (!response.ok) throw new Error("Erro no servidor Proxy");
+
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error("Certifique-se que o servidor proxy está rodando!");
   }
-  return null;
 }
 
-export function createChat() {
+export function createChat(history: any[] = []) {
   return ai.chats.create({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.5-flash", // Mantemos o Flash para ser rápido e não dar erro de limite!
+    history: history,
     config: {
       systemInstruction: "Você é o ApexAI, um engenheiro de dados automotivos e preparador (tuner) de alta performance especializado em dinâmica veicular e calibração de motores. Responda de forma técnica e objetiva em português.",
     },

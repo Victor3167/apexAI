@@ -45,8 +45,8 @@ export function SpeechGenerator() {
   return (
     <div className="p-8 max-w-4xl mx-auto h-full overflow-y-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2">Audio Report</h2>
-        <p className="text-zinc-400">Convert your tuning notes or telemetry analysis into a professional audio report.</p>
+        <h2 className="text-3xl font-bold text-white mb-2">Relatório em áudio</h2>
+        <p className="text-zinc-400">Converta suas anotações de afinação ou análises de telemetria em um relatório de áudio profissional.</p>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
