@@ -1,22 +1,17 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { TelemetryAnalysis } from "../types";
 
-// Create a default instance for non-image tasks
+// Instância principal
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function analyzeTelemetry(data: string): Promise<TelemetryAnalysis> {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: `Você é o ApexAI, um engenheiro de dados automotivos e preparador (tuner) de alta performance especializado em dinâmica veicular e calibração de motores.
 
-Seu objetivo é analisar logs de telemetria brutos (fornecidos em formato CSV ou JSON) extraídos de ECUs de carros preparados (como motores com injeção programável) ou de simuladores profissionais de corrida.
+Seu objetivo é analisar logs de telemetria brutos (fornecidos em formato CSV ou JSON) extraídos de ECUs de carros preparados ou de simuladores profissionais de corrida.
 
-Ao receber os dados, você deve executar as seguintes análises:
-1. Análise de Saúde do Motor: Verifique a relação Ar/Combustível (AFR) versus RPM e carga (MAP/TPS). Identifique qualquer sinal de mistura excessivamente pobre ou rica, ou quedas anormais de pressão de óleo/combustível que possam indicar risco de quebra.
-2. Dinâmica de Condução e Suspensão: Analise os dados de força G (lateral e longitudinal), ângulo de esterçamento (steering angle) e patinação das rodas (wheel slip). Identifique comportamentos de subesterço (understeer) ou sobresterço (oversteer) em trechos específicos.
-3. Recomendações de Setup: Com base na análise, forneça recomendações práticas e diretas de acerto. Exemplos: "Atrase o ponto de ignição em 2 graus na faixa de 4500-5500 RPM para evitar detonação", ou "Aumente o camber negativo na dianteira para melhorar o contorno de curvas de alta velocidade".
-
-Aja com extrema precisão técnica. Se os dados fornecidos forem insuficientes para uma recomendação segura, informe no JSON que faltam parâmetros específicos.
+Analise: Saúde do Motor (AFR, RPM, MAP), Dinâmica (G-Force, Steering) e forneça recomendações de Setup.
 
 Aqui estão os dados:
 ${data}`,
@@ -25,27 +20,17 @@ ${data}`,
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          status_motor: {
-            type: Type.STRING,
-            description: "Resumo da saúde do motor com base nos dados",
-          },
-          alertas_criticos: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-            description: "Lista de anomalias perigosas encontradas, ou vazio",
-          },
-          analise_dinamica: {
-            type: Type.STRING,
-            description: "Como o carro está se comportando fisicamente",
-          },
+          status_motor: { type: Type.STRING },
+          alertas_criticos: { type: Type.ARRAY, items: { type: Type.STRING } },
+          analise_dinamica: { type: Type.STRING },
           recomendacoes_tuning: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
-                categoria: { type: Type.STRING, description: "Motor/Suspensao/Freio" },
-                acao: { type: Type.STRING, description: "O que fazer" },
-                justificativa: { type: Type.STRING, description: "Por que fazer" },
+                categoria: { type: Type.STRING },
+                acao: { type: Type.STRING },
+                justificativa: { type: Type.STRING },
               },
             },
           },
@@ -58,26 +43,57 @@ ${data}`,
     return JSON.parse(response.text || "{}") as TelemetryAnalysis;
   } catch (e) {
     console.error("Failed to parse JSON", e);
-    throw new Error("Invalid JSON response from model");
+    throw new Error("Resposta inválida do modelo.");
   }
 }
 
+// === FUNÇÃO DE ÁUDIO REFORÇADA ===
 export async function generateSpeech(text: string): Promise<string | null> {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: text }] }],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: "Zephyr" },
+  try {
+    // Limpeza de caracteres que o TTS às vezes tenta "ler" e trava
+    const cleanText = text.replace(/[*_#]/g, '').trim();
+
+    // No SDK atualizado, usamos o modelo 2.0-flash para TTS
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-lite", 
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: `Diga exatamente isto: ${cleanText}` }],
+        },
+      ],
+      config: {
+        // ESSENCIAL: Isso diz ao Gemini para não gerar texto, apenas áudio
+        responseModalities: ["audio"], 
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { 
+              voiceName: "Puck" // Puck é o mais estável para português
+            },
+          },
         },
       },
-    },
-  });
+    });
 
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  return base64Audio || null;
+    // Se a API retornar candidatos, procuramos o dado binário (inlineData)
+    const candidate = response.candidates?.[0];
+    if (candidate && candidate.content && candidate.content.parts) {
+      const audioPart = candidate.content.parts.find(p => p.inlineData && p.inlineData.data);
+      if (audioPart && audioPart.inlineData) {
+        return audioPart.inlineData.data;
+      }
+    }
+
+    console.warn("Aviso: O modelo não anexou o áudio binário à resposta.");
+    return null;
+
+  } catch (error: any) {
+    console.error("Erro no Speech Engine:", error.message);
+    
+    // Se der erro 400 de novo, pode ser que o "Puck" não esteja disponível na sua região. 
+    // Tente comentar a linha do voiceName para usar a padrão.
+    return null;
+  }
 }
 
 export async function generateImage(prompt: string, imageSize: "1K" | "2K" | "4K"): Promise<string | null> {
@@ -106,10 +122,10 @@ export async function generateImage(prompt: string, imageSize: "1K" | "2K" | "4K
 
 export function createChat(history: any[] = []) {
   return ai.chats.create({
-    model: "gemini-2.5-flash", // Mantemos o Flash para ser rápido e não dar erro de limite!
+    model: "gemini-2.0-flash", 
     history: history,
     config: {
-      systemInstruction: "Você é o ApexAI, um engenheiro de dados automotivos e preparador (tuner) de alta performance especializado em dinâmica veicular e calibração de motores. Responda de forma técnica e objetiva em português.",
+      systemInstruction: "Você é o ApexAI, um engenheiro de dados automotivos especializado em alta performance. Responda de forma técnica em português.",
     },
   });
 }
