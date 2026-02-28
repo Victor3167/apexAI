@@ -229,7 +229,7 @@ export function Chatbot() {
                     <Send size={18} />
                 </button>
             </div>
-            <p className="text-[9px] text-center text-zinc-600 mt-4 uppercase tracking-[0.2em]">ApexAI Professional Tuning Assistant</p>
+            <p className="text-[9px] text-center text-zinc-600 mt-4 uppercase tracking-[0.2em]">Assistente de ajuste profissional ApexAI</p>
         </div>
       </div>
 

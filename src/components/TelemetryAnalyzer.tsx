@@ -229,7 +229,7 @@ export function TelemetryAnalyzer() {
                 <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
                     <Activity className="text-red-500" /> Telemetry
                 </h2>
-                <p className="text-xs md:text-sm text-zinc-400 uppercase tracking-widest font-medium">Data Engineering Engine</p>
+                <p className="text-xs md:text-sm text-zinc-400 uppercase tracking-widest font-medium">Mecanismo de engenharia de dados</p>
              </div>
           </header>
 

@@ -163,7 +163,7 @@ export function ImageGenerator() {
       )}
 
       <p className="text-[10px] text-center text-zinc-600 mt-8 uppercase tracking-[0.2em]">
-        Powered by ApexAI Visual Engine
+        Desenvolvido pelo mecanismo visual ApexAI
       </p>
     </div>
   );
